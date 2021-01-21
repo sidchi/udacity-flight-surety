@@ -12,6 +12,17 @@ export default class Contract {
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
+
+        // Watch contract events
+        const STATUS_CODE_UNKNOWN = 0;
+        const STATUS_CODE_ON_TIME = 10;
+        const STATUS_CODE_LATE_AIRLINE = 20;
+        const STATUS_CODE_LATE_WEATHER = 30;
+        const STATUS_CODE_LATE_TECHNICAL = 40;
+        const STATUS_CODE_LATE_OTHER = 50;
+
+        this.STATUS_CODES = Array(STATUS_CODE_UNKNOWN, STATUS_CODE_ON_TIME, STATUS_CODE_LATE_AIRLINE, STATUS_CODE_LATE_WEATHER, STATUS_CODE_LATE_TECHNICAL, STATUS_CODE_LATE_OTHER);
+
     }
 
     initialize(callback) {
@@ -52,5 +63,28 @@ export default class Contract {
             .send({ from: self.owner}, (error, result) => {
                 callback(error, payload);
             });
+    }
+
+    submitOracleResponse(indexes, airline, flight, timestamp, callback){
+        let self = this;
+
+
+        let payload = {
+            indexes: indexes,
+            airline: self.airlines[2],
+            flight: flight,
+            timestamp: timestamp,
+            statusCode: self.STATUS_CODES[Math.floor(Math.random()*self.STATUS_CODES.length)]
+        }
+
+        console.log(payload);
+
+        self.flightSuretyApp.methods
+            .submitOracleResponse(payload.indexes, payload.airline, payload.flight, payload.timestamp, payload.statusCode)
+            .send({from: self.owner}, (error, result) =>{
+                callback(error, payload);
+
+            });
+
     }
 }

@@ -1,3 +1,4 @@
+
 var FlightSuretyApp = artifacts.require("FlightSuretyApp");
 var FlightSuretyData = artifacts.require("FlightSuretyData");
 var BigNumber = require('bignumber.js');
@@ -7,16 +8,16 @@ var Config = async function(accounts) {
     // These test addresses are useful when you need to add
     // multiple users in test scripts
     let testAddresses = [
-        "0x2eC8a236341583cA20cA70653766238b97414685",
-        "0x5987D0CA003602148169a97EED6050C738DE992a",
-        "0x869303280a013f7747FcA4fB9E87088aE51Cf9AB",
-        "0xd7BEF2097A0CDc084c232aC5baD1A59B8b9e4041",
-        "0xf0Df80A7dbD3630eC129F86DfFA03CD447a7ae00",
-        "0x29C2D9162Bd9846c550A8F80Ef52308723161Cd1",
-        "0xB3D7CC2eA41F585872307F22c8A4783192E9206B",
-        "0x0d68d3cc281776a3F68c5AddB23816E4a4AE98AF",
-        "0x36ED477af3c4F7005E2683c7a6f17ad05d797cdF",
-        "0x29bf6770776bAB698d4e2D48cb3fca16690eb38F"
+        "0x04d908E829290cfEB454D687e220421959278c6d",
+        "0x2673a4E01C758D2e35559279c6cAf58EEF0393b3",
+        "0xA1878619e02AF9c82F04B9912569CA295aA5FC80",
+        "0x7DD3384d9aF81CCD2D7Be73D46B32f544c677327",
+        "0xa6E8Ab11975CF7c29e9Dfb9ce31b4c893Ac02c68",
+        "0xD66a5E2280528B8094A9a78E6B43E44376666334",
+        "0x90bc27Ac783b4b055782e8CF931354FEc62A227c",
+        "0xf6718c06Ec086D647215a5EFDE46f987C3181ae7",
+        "0x8861ae3d21a6Ad51757AF73C83F6CA23dF8d2B28",
+        "0x529214Df5e6b52e065df77731DE409991c700D56"
     ];
 
 
@@ -30,7 +31,7 @@ var Config = async function(accounts) {
     return {
         owner: owner,
         firstAirline: firstAirline,
-        weiMultiple: (new BigNumber(10)).pow(1),
+        weiMultiple: (new BigNumber(10)).pow(18),
         testAddresses: testAddresses,
         flightSuretyData: flightSuretyData,
         flightSuretyApp: flightSuretyApp
