@@ -4,9 +4,11 @@ import Contract from './contract';
 import './flightsurety.css';
 
 let result = null;
-    let airlines = null;
-    let flightName = null;
-    let depature = null;
+let airlines = null;
+let flightName = null;
+let depature = null;
+
+
 
 (async() => {
 
@@ -54,16 +56,72 @@ let result = null;
                     console.log("The value event is ",eventIndex_);
 
                     DOM.elid("oracle-response").style.display="block";
-                     DOM.elid('oracle-response').innerHTML += result.statusCode;
-           
 
-                   
+                    //Unknown (0), On Time (10) or Late Airline (20), Late Weather (30), Late Technical (40), or Late Other (50)
+                    let statusMessage = "Unknown"
+                    if(result.statusCode == "10")
+                        statusMessage = "On Time"
+                    if(result.statusCode == "20")
+                        statusMessage = "Late Airline"  
+                    if(result.statusCode == "30")
+                        statusMessage = "Late Weather"  
+                    if(result.statusCode == "40")
+                        statusMessage = "Late Technical"  
+                    if(result.statusCode == "50")
+                        statusMessage = "Late Other"
+
+
+                     displayResult('flight-status','Flight', '', [ { label: 'Status', error: '', value: statusMessage} ]);
 
                                     
                      });
                 })
 
-             })
+             });
+
+
+      
+
+
+        // Listen to pay insurance event
+        DOM.elid('purchase-insurance').addEventListener('click', () => {
+            let price = DOM.elid('insurance').value;
+            let fid = DOM.elid('insured_flights').value;
+            let fdate = DOM.elid('flightDate').value;
+            contract.buy(price,fid, (error, result)=> {
+                console.log("Insurance purchased with", price);
+                display('Oracles', 'Trigger oracles', [ { label: 'Assurance Detail', 
+                error: error, value: "Flight Name: "+fid+" | Depature Date: "+fdate+" | Assurance Paid: "+price+" ether"+ " | Paid on Delay: "+price*1.5+" ether"} ],"display-flight", "display-detail");
+                console.log("result", result);
+            });
+        });
+
+        DOM.elid('status').addEventListener('click', () => {
+            let fid = DOM.elid('flights').value;
+            contract.status(fid, (error, result)=> {
+                displayResult('flight-all-status','Flight', '', [ { label: 'Status', error: error, value: result} ]);
+
+            });
+        });
+
+        
+
+        // Passenger withdraw funds
+        DOM.elid('withdraw-funds').addEventListener('click', () => {
+            contract.withdraw((error, result) => {
+
+                DOM.elid('withdraw-funds').style.display = "none"; 
+                DOM.elid('table-report').style.display = "none"; 
+
+                DOM.elid("withdrawn-value").innerHTML = DOM.elid("delay").innerHTML;
+                DOM.elid("withdrawn").style.display = "block";
+                console.log('Successfull');
+            });
+
+        })
+        // end insurance purchase function
+
+
     
     });
     
@@ -73,6 +131,21 @@ let result = null;
 
 function display(title, description, results) {
     let displayDiv = DOM.elid("display-wrapper");
+    let section = DOM.section();
+    section.appendChild(DOM.h2(title));
+    section.appendChild(DOM.h5(description));
+    results.map((result) => {
+        let row = section.appendChild(DOM.div({className:'row'}));
+        row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
+        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
+        section.appendChild(row);
+    })
+    displayDiv.append(section);
+
+}
+
+function displayResult(id,title, description, results) {
+    let displayDiv = DOM.elid(id);
     let section = DOM.section();
     section.appendChild(DOM.h2(title));
     section.appendChild(DOM.h5(description));

@@ -30436,9 +30436,99 @@
     "name": "solc",
     "version": "0.4.26+commit.4563c3fc.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "1611360390237": {
+      "events": {
+        "0xe23f5229de535c091e3b7bec2665f5d698192d3b31393066e8987b7a05076b6c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "flight",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "name": "FlightStatusInfo",
+          "type": "event"
+        },
+        "0x43c853095c2752648493c88b4baac4d580d2594ffb00c6f1d4242d844514f783": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "flight",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "name": "OracleReport",
+          "type": "event"
+        },
+        "0x3ed01f2c3fc24c6b329d931e35b03e390d23497d22b3f90e15b600343e93df11": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "index",
+              "type": "uint8"
+            },
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "flight",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "name": "OracleRequest",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x94efa96f8e0774B35Ddbe9f4ADDa9d13f62d20A1",
+      "transactionHash": "0xc1c87c0285dba3f6bf79511c415092b94aae8a7754f84b19fefeeac057bb7929"
+    }
+  },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-21T00:19:47.199Z",
+  "updatedAt": "2021-01-23T00:06:49.181Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {
       "buyInsurance(address,string,uint256)": {

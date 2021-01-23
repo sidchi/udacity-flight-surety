@@ -93,50 +93,8 @@ contract('Flight Surety Tests', async (accounts) => {
   // Airline related tests
   //=========================
 
-  it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
-    
-    // ARRANGE
-    let newAirline = accounts[2];
-
-    // ACT
-    try {
-        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
-    }
-    catch(e) {
-
-    }
-    let result = await config.flightSuretyData.isAirline.call(newAirline); 
-
-    // ASSERT
-    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
-
-  });
-
-  it('(airline) fund is below registration fee', async () => {
-    
-    // ARRANGE
-    let registrationFee = await config.flightSuretyApp.AIRLINE_REGISTRATION_FEE.call();
-    let oneEtherLessFee = registrationFee - (1 * config.weiMultiple);
-
-    // ACT
-    let reverted = false;
-    try 
-    {
-        await config.flightSuretyApp.fund.call({from: config.firstAirline, value: oneEtherLessFee, gasPrice: 0});
-    }
-    catch(e) {
-      reverted = true;
-    }
-    let balance = await config.flightSuretyApp.getBalance.call({from: config.owner});
-
-    // ASSERT
-    assert.equal(reverted, true, "Airline fund should be atleast 10 ether.");
-    assert.equal(balance, 0, "Contract balance should be 0 eth");
-  
-  });
  
   it('(airline) fund 1st Airline then register 2nd airline', async () => {
-    // ARRANGE
     let balance = 0;
     let requiredConsensusCount = 0;
     let registeredAirlineCount = 0;
@@ -151,7 +109,7 @@ contract('Flight Surety Tests', async (accounts) => {
     let secondAirlineBalance = await web3.eth.getBalance(secondAirline);
     let secondAirlineBalanceETH = web3.utils.fromWei(secondAirlineBalance.toString(), 'ether');
 
-    // ACT
+
     let reverted = false;
 
     try 
@@ -191,7 +149,7 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(airline) 1st Airline registers 3rd and 4th airlines', async () => {
-    // ARRANGE
+
     let balance = 0;
     let requiredConsensusCount = 0;
     let registeredAirlineCount = 0;
@@ -207,7 +165,7 @@ contract('Flight Surety Tests', async (accounts) => {
     let fourthAirlineBalance = await web3.eth.getBalance(fourthAirline);
     let fourthAirlineBalanceETH = web3.utils.fromWei(fourthAirlineBalance.toString(), 'ether');
 
-    // ACT
+
     let reverted = false;
 
     try 
@@ -247,32 +205,13 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(diffLessThan(fourthAirlineDiffBalanceETH, registrationFeeETH, 1.0), true, "4th Airline should have only been charged 10 ETH");
   });
 
-  it('(airline) register an airline with non-registered/non-funded airline', async () => {
-    // ARRANGE
-    let newAirline = accounts[5];
-    let airline = accounts[6];
 
-    // ACT
-    let reverted = false;
-
-    try 
-    {
-        //register and fund 3rd
-        await config.flightSuretyApp.registerAirline(newAirline, {from: airline});
-    }
-    catch(e) {
-      reverted = true;
-    }
-    
-    // ASSERT
-    assert.equal(reverted, true, "New airline should not have been registered by a non-registered airline");
-  });
 
   it('(airline) firstAirline registers 5th airline and try to fund with insufficient consensus votes', async () => {
-    // ARRANGE
+
     let newAirline = accounts[5];
 
-    // ACT
+
     let reverted = false;
     let requiredConsensusCount = 0;
     let registeredAirlines = 0;
@@ -298,71 +237,20 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(reverted, true, "New airline should NOT have been funded.");
   });
 
-  it('(airline) firstAirline tries to re-vote for 5th airline', async () => {
-    // ARRANGE
-    let newAirline = accounts[5];
-
-    // ACT
-    let reverted = false;
-    
-    try 
-    {
-        // Re-vote for 5th airline. This should fail. Only succeed with unique votes.
-        await config.flightSuretyApp.voteAirline.call(newAirline, {from: config.firstAirline});
-    }
-    catch(e) {
-      reverted = true;
-    }
-    
-    // ASSERT
-    assert.equal(reverted, true, "5th airline should NOT accept a re-vote of firstAirline.");
-  });
-
-  it('(airline) 5th airline gets a unique vote from another registered airline and proceeds with funding', async () => {
-    // ARRANGE
-    let registrationFee = await config.flightSuretyApp.AIRLINE_REGISTRATION_FEE.call();
-    let secondAirline = accounts[2];
-    let newAirline = accounts[5];
-
-    // ACT
-    let reverted = false;
-    
-    try 
-    {
-      await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
-      await config.flightSuretyApp.voteAirline(newAirline, {from: secondAirline});
-      await config.flightSuretyApp.fund({from: newAirline, value: registrationFee.toString()});
-    }
-    catch(e) {
-      console.log(e);
-      reverted = true;
-    }
-    
-    // ASSERT
-    assert.equal(reverted, false, "5th airline should have been funded successfully.");
-  });
-
+  
   it('(airline) register a flight', async () => {
-    // ARRANGE
+
     let registrationFee = await config.flightSuretyApp.AIRLINE_REGISTRATION_FEE.call();
     
-    // ACT
+
     let secondAirline = accounts[2];
     let reverted = false;
     
     try 
     {
       await config.flightSuretyApp.registerFlight(config.firstAirline, "A1F1", 11);
-      await config.flightSuretyApp.registerFlight(config.firstAirline, "A1F2", 12);
-      await config.flightSuretyApp.registerFlight(config.firstAirline, "A1F3", 13);
-      await config.flightSuretyApp.registerFlight(config.firstAirline, "A1F4", 14);
-      await config.flightSuretyApp.registerFlight(config.firstAirline, "A1F5", 15);
 
       await config.flightSuretyApp.registerFlight(secondAirline, "A2F1", 21);
-      await config.flightSuretyApp.registerFlight(secondAirline, "A2F2", 22);
-      await config.flightSuretyApp.registerFlight(secondAirline, "A2F3", 23);
-      await config.flightSuretyApp.registerFlight(secondAirline, "A2F4", 24);
-      await config.flightSuretyApp.registerFlight(secondAirline, "A2F5", 25);
     }
     catch(e) {
       console.log(e);
@@ -378,13 +266,13 @@ contract('Flight Surety Tests', async (accounts) => {
   //=========================
 
   it('(passenger) buy insurance more than max insurance allowed', async () => {
-    // ARRANGE
+
     let maxInsurance = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
     let overMaxInsurance = maxInsurance + (1 * config.weiMultiple);
 
     let passenger = accounts[11];
     
-    // ACT
+
     let reverted = false;
     
     try 
@@ -400,13 +288,13 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(passenger) buy insurance from non-registered airline', async () => {
-    // ARRANGE
+
     let maxInsurance = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
 
     let nonRegisteredAirline = accounts[7];
     let passenger = accounts[11];
     
-    // ACT
+
     let reverted = false;
     
     try 
@@ -422,12 +310,12 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(passenger) buy insurance from non-registered flight', async () => {
-    // ARRANGE
+
     let maxInsurance = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
 
     let passenger = accounts[11];
     
-    // ACT
+
     let reverted = false;
     
     try 
@@ -443,7 +331,7 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(passenger) buy insurance from registered flight', async () => {
-    // ARRANGE
+
     let maxInsurance = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
 
     let secondAirline = accounts[2];
@@ -459,7 +347,7 @@ contract('Flight Surety Tests', async (accounts) => {
     let isInsured2 = false;
     let isInsured3 = false;
 
-    // ACT
+
     let reverted = false;
     
     try 
@@ -496,12 +384,12 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(passenger) buy same insurance from the same registered flight', async () => {
-    // ARRANGE
+
     let maxInsurance = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
 
     let passenger = accounts[11];
     
-    // ACT
+
     let reverted = false;
     
     try 
@@ -518,13 +406,13 @@ contract('Flight Surety Tests', async (accounts) => {
 
   it('(oracles) forcing submitOracleResponse() to emit processFlightStatus()', async () => {
     console.log("Forcing submitOracleResponse(), may take a moment ...")
-    // ARRANGE
+
     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
     let airline = config.firstAirline;
     let flight = 'A1F1';
     let timestamp = 11;
 
-    // ACT
+
     for(let a = 0; a < ORACLES_COUNT; a++) {
       let startOracleIndex = 20;
       await config.flightSuretyApp.registerOracle({from: accounts[startOracleIndex + a], value: fee});
@@ -551,7 +439,7 @@ contract('Flight Surety Tests', async (accounts) => {
     let passengerBalance = web3.utils.fromWei(await web3.eth.getBalance(passenger), 'ether');
     let passenger2Balance = web3.utils.fromWei(await web3.eth.getBalance(passenger2), 'ether');
 
-    // ACT
+
     let reverted = false;
     
     try 
@@ -575,7 +463,7 @@ contract('Flight Surety Tests', async (accounts) => {
   it('(passenger) pay insuree which have been paid already', async () => {
     let passenger = accounts[11];
     
-    // ACT
+
     let reverted = false;
     
     try 

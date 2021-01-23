@@ -24,12 +24,66 @@
         <div id="display-wrapper" class="top-20">
         </div>
         <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+            <label class="form">Flight</label> <input type="text" id="flight-number">
+            <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+
+           
         </div>
-        <div class="top-20">
-            <button style="display:block" id="oracle-response"  class="btn btn-primary" type="button">Track Flight Status!   </button>
+
+
+        <div class="row top-20">
+            <btn id="oracle-response"  class="btn btn-primary">Track Flight Status!</btn>
+        </div>
+        <div class="row top-20">
+            <div id="flight-status" class="top-20">
+            </div>
             <span id='holdIndex' style="display: none"></span>
-          </div>
+           
+        </div>
+
+        <div class="row top-20">
+            
+            
+            <label for="insured_flights">Choose a Flight:</label>
+
+            <select name="insured_flights" id="insured_flights">
+            <option value="1">ND1309</option>
+            <option value="2">ND1310</option>
+            <option value="3">ND1311</option>
+            <option value="4">ND1312</option>
+            <option value="5">ND1313</option>
+            </select>
+
+            <label class="form">FlightDate</label> <input type="text" id="flightDate" value="1/1/2020">
+            <label class="form">Insurance Price</label> <input type="text" id="insurance" value="1">
+            <btn id="purchase-insurance"  class="btn btn-primary">Buy Flight Insurance</btn>
+        </div>
+        <div class="row top-20">
+            <div id="insurance-status" class="top-20">
+            </div>
+            <span id='holdIndex' style="display: none"></span>
+           
+        </div>
+
+<div class="row top-20">
+            <btn id="status"  class="btn btn-primary">All Status Flight</btn>
+            <label for="flights">Choose a Flight:</label>
+
+            <select name="flights" id="flights">
+            <option value="1">ND1309</option>
+            <option value="2">ND1310</option>
+            <option value="3">ND1311</option>
+            <option value="4">ND1312</option>
+            <option value="5">ND1313</option>
+            </select>
+        </div>
+        <div class="row top-20">
+            <div id="flight-all-status" class="top-20">
+            </div>
+          
+        </div>
+
+
     </main>
 
 </body>
