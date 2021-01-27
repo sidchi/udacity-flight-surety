@@ -136,43 +136,6 @@ flightSuretyApp.events.FlightStatusInfo({
 });
 
 
-flightSuretyApp.events.RegisterAirline({
-  fromBlock: 0
-}, function (error, event) {
-  if (error) console.log(error)
-  console.log(event)
-});
-
-flightSuretyApp.events.FundedLines({
-  fromBlock: 0
-}, function (error, event) {
-  if (error) console.log(error)
-  console.log(event)
-});
-
-flightSuretyApp.events.PurchaseInsurance({
-  fromBlock: 0
-}, function (error, event) {
-  if (error) console.log(error)
-  console.log(event)
-});
-
-
-flightSuretyApp.events.CreditInsurees({
-  fromBlock: 0
-}, function (error, event) {
-  if (error) console.log(error)
-  console.log(event)
-});
-
-
-flightSuretyApp.events.Withdraw({
-fromBlock: 0
-}, function (error, event) {
-if (error) console.log(error)
-console.log(event)
-});
-
 flightSuretyApp.events.OracleRequest({
   fromBlock: 0
 }, function (error, event) {
@@ -181,15 +144,6 @@ flightSuretyApp.events.OracleRequest({
   eventIndex = event.returnValues.index;
   console.log(event)
 });
-
-flightSuretyApp.events.OracleReport({
-fromBlock: 0
-}, function (error, event) {
-if (error) console.log(error)
-console.log(event)
-});
-
-
 
 const app = express();
 var corsOptions = {

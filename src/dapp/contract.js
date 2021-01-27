@@ -11,7 +11,7 @@ export default class Contract {
         let config = Config[network];
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-        this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, config.appAddress);
+        this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
         this.initialize(callback);
         this.owner = null;
         this.airlines = [];
@@ -37,7 +37,7 @@ export default class Contract {
             this.owner = accts[0];
 
             let counter = 1;
-            
+     
             
             while(this.airlines.length < 5) {
                 // Register the airlines
@@ -47,6 +47,7 @@ export default class Contract {
             }
             // Fund this airline to be used in the project.
             this.fundAirline(this.airlines[2]);
+            console.log(this.airlines);
 
 
             while(this.passengers.length < 5) {
@@ -67,12 +68,13 @@ export default class Contract {
     }
     fundAirline(airlineAddress){
         let self = this;
-        let fee = Web3.utils.toWei("10", "ether");
+        let fee = Web3.utils.toWei(("10").toString(), "ether")
 
         self.flightSuretyApp.methods
             .fund()
             .send({from: airlineAddress, value: fee}, (error, result) =>{
-
+                console.log("ERROR "+error);
+                console.log("RESULT "+result);
             });
 
     }
@@ -130,11 +132,11 @@ export default class Contract {
         let payload = {
             airline: this.airlines[2],
             passenger: self.passengers[1],
-            price_wei:   Web3.utils.toWei((price).toString(), "ether"), //  Web3.utils.toWei(price.toString(), "ether")
+            price_wei:   Web3.utils.toWei("1", "ether")
         }
         console.log(payload);
         self.flightSuretyApp.methods
-            .buyInsurance(payload.airline, payload.price_wei,Math.floor(Date.now() / 1000))
+            .buy(payload.airline)
             .send({from: payload.passenger, value: payload.price_wei}, (error, result) => {
                 console.log(error);
                 callback(error, result);

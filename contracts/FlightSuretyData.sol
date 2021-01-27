@@ -3,76 +3,51 @@ pragma solidity ^0.4.25;
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract FlightSuretyData {
+    //using SafeMath for uint;
     using SafeMath for uint256;
-
-    // Airline registration code
-    uint8 private constant REGISTRATION_CODE_UNKNOWN             = 0;
-    uint8 private constant REGISTRATION_CODE_ADDED_TO_QUEUE      = 1;
-    uint8 private constant REGISTRATION_CODE_VOTED_IN            = 2;
-    uint8 private constant REGISTRATION_CODE_FUNDED              = 3;
-    uint8 private constant REGISTRATION_CODE_REGISTERED          = 4;
+    
 
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
-
-
-    uint256 private constant MULTIPARTY_CONSENSUS_THRESHOLD = 4;
     
-    uint constant M = 1;
-
-    address private contractOwner;              // Account used to deploy contract
-    bool private operational = true;            // Blocks all state changes throughout the contract if false
-    bool private testing = false;
-    
-    address[] multiCalls = new address[](0);
-    mapping(address => uint256) private authorizedContracts;
-
-    //------------
-    // Airlines
-    struct Airline {
-        uint8 registrationCode;                 // Registration phase the airline is in.
-        address[] approvedBy;                   // Registered airlines which voted for the airline.
-        bytes32[] flightKeys;   
-    }
-    mapping(address => Airline) airlines;       // Holds all the candidate airlines
-    address[] registeredAirlines;               // Holds all registered airlines
-
-    //------------
-    // Flights
-    struct Flight {
+    // Struct used to hold registered airlines
+    struct Airlines {
         bool isRegistered;
-        string flight;
-        uint8 statusCode;
-        uint256 timestamp;
+        bool isOperational;
     }
-    // Key = hash(airline, flight, timestamp)
-    mapping(bytes32 => Flight) private flights;
 
-    //------------
-    // Users
-    struct User {
-        address id;
-        bool isRegistered;
-        uint256 payout;                         // Holds the total payout for the user.
-    }
-    mapping(address => User) users;
-
-    //------------
-    // Insurances
     struct Insurance {
-        uint256 paidAmount;                     // Amount paid by the insuree
-        bool payoutReceived;                    // The user has been credited if insurance kicked in.
-        address buyerAddress;                   // Links to Users map
-    }
-    // Track all paid insurances
-    // Key = hash(airline, flight, timestamp)
-    mapping(bytes32 => Insurance[]) private insurances;
+        address passenger;
+        uint256 amount;
     
-                                 
+    }
+    struct Fund {
+        uint256 amount;
+    }
+    struct Voters {
+        bool status;
+    }
+
+    address private contractOwner;                                      // Account used to deploy contract
+    bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+
+    mapping(address => uint256) private authorizedCaller;
+    mapping(address => Airlines) airlines;                             // mapping address to struct which holds registered airlines.
+    mapping(address => Insurance) insurance;                             // Airline address maps to struct
+    mapping(address => uint256) balances;
+    mapping(address => Fund) fund;
+    address[] multiCalls = new address[](0);
+    mapping(address => uint) private voteCount;
+    mapping(address => Voters) voters;
+ 
+
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
+
+    event AuthorizedContract(address authContract);
+    event DeAuthorizedContract(address authContract);
 
 
     /**
@@ -81,18 +56,10 @@ contract FlightSuretyData {
     */
     constructor
                                 (
-                                    address firstAirline
                                 ) 
                                 public 
     {
         contractOwner = msg.sender;
-        
-        // Create first Airline. Mark it as Added and VotedIn. Fund it later.
-        airlines[firstAirline] = Airline({
-            registrationCode: REGISTRATION_CODE_VOTED_IN, 
-            approvedBy: new address[](0),
-            flightKeys: new bytes32[](0)
-        });
     }
 
     /********************************************************************************************/
@@ -122,67 +89,6 @@ contract FlightSuretyData {
         _;
     }
 
-    /**
-    * @dev Modifier that requires function caller to be authorized caller.
-    */
-    modifier requireIsCallerAuthorized()
-    {
-        require(authorizedContracts[msg.sender] == 1, "Caller is not authorized caller");
-        _;
-    }
-
-    /**
-     * Modifier that requires an airline to be registered.
-     */
-    modifier requireRegisteredAirline(address airline)
-    {
-        if (registeredAirlines.length > 0) {
-            bool isRegistered = hasEntry(registeredAirlines, airline);
-            require(isRegistered, "Airline needs to be registered.");
-        }
-        _;
-    }
-
-    /**
-     * Modifier that requires an airline to be new and has no profile yet.
-     */
-    modifier requireNewAirline(address newAirline)
-    {
-        if (registeredAirlines.length > 0) {
-            bool isNew = !hasEntry(registeredAirlines, newAirline);
-            require(isNew, "Airline is new and not registered.");
-        }
-        _;
-    }
-
-    /**
-     * Modifier that requires an airline have been added.
-     */
-    modifier requireAddedAirline(address newAirline)
-    {
-        require(airlines[newAirline].registrationCode == REGISTRATION_CODE_ADDED_TO_QUEUE, "Airline should have been added to the registration queue.");
-        _;
-    }
-
-    /**
-     * Modifier that requires a registered airline to have not voted yet for a candidate airline.
-     */
-    modifier requireRegisteredAirlineNotVotedYet(address newAirline)
-    {
-        bool hasVoted = false;
-        address registeredAirline = msg.sender;
-        if (airlines[newAirline].approvedBy.length > 0) {
-            for(uint c = 0; c < airlines[newAirline].approvedBy.length; c++) {
-                if (airlines[newAirline].approvedBy[c] == registeredAirline) {
-                    hasVoted = true;
-                    break;
-                }
-            }
-        }
-        require(hasVoted == false, "Airline should not have any vote yet for.");
-        _;
-    }
-
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -200,6 +106,7 @@ contract FlightSuretyData {
         return operational;
     }
 
+
     /**
     * @dev Sets contract operations on/off
     *
@@ -212,40 +119,79 @@ contract FlightSuretyData {
                             external
                             requireContractOwner 
     {
-        require(mode != operational, "New mode must be different from existing mode");
-        
-        if (hasEntry(multiCalls, msg.sender) == false) {
-            multiCalls.push(msg.sender);
-        } else {
-            require(true, "Caller has already called this function");
-        }
-
-        // This requires multi-party consensus, ie set by M variable, to enable/disable operation..
-        if (multiCalls.length >= M) {
-            operational = mode;
-            multiCalls = new address[](0);
-        }
         operational = mode;
     }
 
-    /**
-    * @dev Sets testing mode on/off
-    *
-    * When operational mode is disabled, all write transactions will fail
-    */    
-    function setTestingMode
-                            (
-                                bool testing_mode
-                            ) 
-                            external
-                            requireIsOperational 
-    {
-        testing = testing_mode;
+    /********************************************************************************************/
+    /*                                     SMART CONTRACT FUNCTIONS                             */
+    /********************************************************************************************/
+
+    // ------------------- Get and Set function for multiCalls -------------------------
+
+    function setmultiCalls(address account) private {
+        multiCalls.push(account);
+    }
+    function multiCallsLength() external requireIsOperational returns(uint){
+        return multiCalls.length;
     }
 
-    /**
-    * @dev Adds an address to be a authorized caller.
-    */   
+
+    //----------------- Set and Get function for Airline struct ------------------------------
+    function getAirlineOperatingStatus(address account) external requireIsOperational returns(bool){
+        return airlines[account].isOperational;
+    }
+
+    function setAirlineOperatingStatus(address account, bool status) external requireIsOperational {
+        airlines[account].isOperational = status;
+    }
+
+    function getAirlineRegistrationStatus(address account) external requireIsOperational returns(bool){
+        return airlines[account].isRegistered;
+    }
+
+    function getVoteCounter(address account) external requireIsOperational returns(uint){
+        return voteCount[account];
+    }
+    function resetVoteCounter(address account) external requireIsOperational{
+        delete voteCount[account];
+    }
+    function getVoterStatus(address voter) external requireIsOperational returns(bool){
+        return voters[voter].status;
+    }
+    function addVoters(address voter) external{
+        voters[voter] = Voters({
+            status: true
+        });
+    }
+    function addVoterCounter(address airline, uint count) external{
+        uint vote = voteCount[airline];
+        voteCount[airline] = vote.add(count); 
+    }
+
+
+
+    // ---------------------------- Insurance registration --------------------------
+    function registerInsurance(address airline, address passenger, uint256 amount) external requireIsOperational{
+        insurance[airline] = Insurance({
+            passenger: passenger,
+            amount: amount
+        });
+        uint256 getFund = fund[airline].amount;
+        fund[airline].amount = getFund.add(amount);
+    }
+
+    //-----------------------------Fund recording -------------------------
+    function fundAirline(address airline, uint256 amount) external{
+        fund[airline] = Fund({
+            amount: amount
+        });
+
+    }
+    function getAirlineFunding(address airline) external returns(uint256){
+        return fund[airline].amount;
+    }
+
+
     function authorizeCaller
                             (
                                 address contractAddress
@@ -253,596 +199,114 @@ contract FlightSuretyData {
                             external
                             requireContractOwner
     {
-        authorizedContracts[contractAddress] = 1;
+        authorizedCaller[contractAddress] = 1;
+        emit AuthorizedContract(contractAddress);
     }
 
-    /**
-    * @dev Removes an address to be a authorized caller.
-    */   
-    function deauthorizeCaller
+    function deauthorizeContract
                             (
                                 address contractAddress
                             )
                             external
                             requireContractOwner
     {
-        delete authorizedContracts[contractAddress];
+        delete authorizedCaller[contractAddress];
+        emit DeAuthorizedContract(contractAddress);
     }
 
-    /**
-    * @dev This checks if an address appears in the list of addresses.
-    */ 
-    function hasEntry   (
-                            address[] memory addresses, 
-                            address addressToCheck
-                        ) 
-                        internal 
-                        pure 
-                        returns(bool)
-    {
-        bool exists = false;
-        for(uint c = 0; c < addresses.length; c++) {
-            if (addresses[c] == addressToCheck) {
-                exists = true;
-                break;
-            }
-        }
-        return exists;
-    }
 
-    /**
-    * @dev This returns the multiparty consensus required count.
-    *
-    * When registered airlines is < 4, consensus count is 0. Otherwise, consensus count is 
-    * half the number of registered airlines.
-    */ 
-    function getNextRequiredConsensusCount () 
-                                public 
-                                view 
-                                returns (uint256) 
-    {
-        uint256 reqConsensusCount = 0;
-        if (registeredAirlines.length + 1 > MULTIPARTY_CONSENSUS_THRESHOLD) {
-            reqConsensusCount = registeredAirlines.length;
-            reqConsensusCount = reqConsensusCount.div(2);
-        } 
-        return reqConsensusCount;
-    }
-
-    /**
-    * @dev This returns the contract balance.
-    */ 
-    function getBalance()
-                        public
-                        view
-                        requireIsOperational
-                        requireContractOwner
-                        returns (uint256) 
-    {
-        return address(this).balance;
-    }
-
-    /**
-    * @dev This returns the number of registered airlines.
-    */                     
-    function getRegisteredAirlinesCount()
-                                        public
-                                        view
-                                        returns (uint256)
-    {
-        return registeredAirlines.length;
-    }
-
-    /**
-    * @dev Returns true if airline is registered. Otherwise, false.
-    */ 
-    function isAirline      (
-                                address newAirline
-                            ) 
-                            external
-                            view 
-                            returns (bool)
-    {
-        return airlines[newAirline].registrationCode == REGISTRATION_CODE_REGISTERED;
-    }
-
-    /**
-    * @dev Returns true if flight is registered. Otherwise, false.
-    */ 
-    function isFlight      (
-                                address airline,
-                                string flight,
-                                uint256 timestamp
-                            ) 
-                            external
-                            view 
-                            returns (bool)
-    {
-        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-        return flights[flightKey].isRegistered;
-    }
-
-    /**
-    * @dev Returns true if passenger is registered.
-    */ 
-    function isUser
-                            (
-                                address passenger
-                            ) 
-                            external
-                            view 
-                            returns (bool)
-    {
-        return users[passenger].isRegistered;
-    }
-
-    /**
-     * @dev Returns if airline is clear for funding. Only airlines that have been voted in are cleared
-     *  for funding. Airlines that are only added are not cleared for funding - needs half of the registered
-     *  airlines vote to get voted in.
-     */
-    function isAirlineClearedForFunding (
-                                            address airline
-                                        )
-                                        external
-                                        view
-                                        returns (bool)
-    {
-        return airlines[airline].registrationCode == REGISTRATION_CODE_VOTED_IN;
-    }
-
-    /**
-     * @dev Returns boolean indicating whether an airline has been added to the queue or not.
-     */
-    function isAirlineAdded         (
-                                        address airline
-                                    ) 
-                                    internal 
-                                    view 
-                                    returns (bool) 
-    {
-        return airlines[airline].registrationCode >= REGISTRATION_CODE_ADDED_TO_QUEUE;
-    }
-
-    /**
-     * @dev Returns boolean indicating whether an airline has been voted in (ie, received enough votes).
-     */
-    function isAirlineVotedIn       (
-                                        address airline
-                                    ) 
-                                    internal 
-                                    view 
-                                    returns (bool)
-    {
-         return airlines[airline].registrationCode >= REGISTRATION_CODE_VOTED_IN;
-    }
-
-    /**
-     * @dev Returns boolean indicating whether an airline has been funded or not.
-     */
-    function isAirlineFunded        (
-                                        address airline
-                                    ) 
-                                    internal 
-                                    view 
-                                    returns (bool)
-    {
-        return airlines[airline].registrationCode >= REGISTRATION_CODE_FUNDED;
-    }
-
-    /**
-     * @dev Returns boolean indicating whether an airline has been registered or not.
-     */
-    function isAirlineRegistered    (
-                                        address airline
-                                    ) 
-                                    internal 
-                                    view 
-                                    returns (bool)
-    {
-        return airlines[airline].registrationCode == REGISTRATION_CODE_REGISTERED;
-    }
-
-    /**
-     * @dev Returns array of booleans and number indicating indicating whether an airline has been 
-     *      added, votedin, funded, registered and the number of votes number before it can proceed
-     *      with the registration.
-     */
-    function getAirlineStatusInfo   (
-                                        address airline
-                                    )
-                                    external 
-                                    view 
-                                    returns (bool added, bool voted, bool funded, bool registered, uint256 votesNeeded)
-    {
-        bool isRegistered = isAirlineRegistered(airline);
-        votesNeeded = isRegistered ? 0 : getNextRequiredConsensusCount() - airlines[airline].approvedBy.length;
-
-        return (
-            isAirlineAdded(airline),
-            isAirlineVotedIn(airline),
-            isAirlineFunded(airline),
-            isRegistered,
-            votesNeeded
-        );
-    }
-
-    /**
-    * @dev Returns vote count.
-    */ 
-    function voteCount      (
-                                address newAirline
-                            ) 
-                            internal
-                            view 
-                            returns (uint256)
-    {
-        return airlines[newAirline].approvedBy.length;
-    }
-
-    /**
-    * @dev Returns total payout balance for particular insuree.
-    */ 
-    function getPayoutBalance   (
-                                    address insuree
-                                )
-                            external
-                            view
-                            returns(uint256)
-    {
-        return users[insuree].payout;
-    }
-
-    /**
-    * @dev Returns true if passenger is insured. Otherwise, false.
-    *
-    */ 
-    function isInsured  (
-                            address airline,
-                            string flight,
-                            uint256 timestamp,
-                            address insuree
-                        )
-                        external
-                        view
-                        returns(bool)
-    {
-        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-        bool insured = false;
-
-        Insurance[] storage paidFlightInsurances = insurances[flightKey];
-        for(uint c = 0; c < paidFlightInsurances.length; c++) {
-            Insurance storage insurance = paidFlightInsurances[c];
-            // Check if the user hasn't been credited yet.
-            if (insurance.buyerAddress == insuree && insurance.paidAmount > 0) {
-                insured = true;
-            }
-        }
-        return insured;
-    }
-
-    /**
-    *  @dev Returns insurance paid by passenger for particular airline, flight and timestamp.
-    */
-    function getInsuredAmount  (
-                            address airline,
-                            string flight,
-                            uint256 timestamp,
-                            address insuree
-                        )
-                        external
-                        view
-                        returns(uint256)
-    {
-        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-        uint256 amount = 0;
-
-        Insurance[] storage paidFlightInsurances = insurances[flightKey];
-        for(uint c = 0; c < paidFlightInsurances.length; c++) {
-            Insurance storage insurance = paidFlightInsurances[c];
-            if (insurance.buyerAddress == insuree) {
-                amount = insurance.paidAmount;
-            }
-        }
-        return amount;
-    }
-
-    /********************************************************************************************/
-    /*                                     SMART CONTRACT FUNCTIONS                             */
-    /********************************************************************************************/
-
-    //--------------------
-    // Airline functions
-    //--------------------
-
-    /**
+   /**
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
-    */   
-    function registerAirline
-                            (   
-                                address airline,
-                                address newAirline
-                            )
-                            public
-                            requireRegisteredAirline(airline) 
-                            requireNewAirline(newAirline)
-    {
-        // Rules for registering an airline:
-        
-        // Rule #1: First airline is registered and voted in.
-        if (registeredAirlines.length == 0) {
-            airlines[newAirline] = Airline({
-                registrationCode: REGISTRATION_CODE_VOTED_IN, 
-                approvedBy: new address[](0),
-                flightKeys: new bytes32[](0)
-            });
-
-        // Rule #2: Only existing airline may register a new airline until there are 
-        //          atleast 4 airlines registered.
-        } else if (registeredAirlines.length < MULTIPARTY_CONSENSUS_THRESHOLD) {
-            // Mark as VotedIn by sponsor. No need for multiparty consensus yet.
-            airlines[newAirline] = Airline({
-                registrationCode: REGISTRATION_CODE_VOTED_IN, 
-                approvedBy: new address[](0),
-                flightKeys: new bytes32[](0)
-            });
-            airlines[newAirline].approvedBy.push(airline);
-
-        // Rule #3: Registration of 5th and subsequent airlines requires multi-party 
-        //          consensus of 50% of registered airlines.
-        } else {
-            // Mark as Added to the queue and Voted in by sponsor
-            airlines[newAirline] = Airline({
-                registrationCode: REGISTRATION_CODE_ADDED_TO_QUEUE,
-                approvedBy: new address[](0),
-                flightKeys: new bytes32[](0)
-            });
-            // 1st vote from sponsor, need to gather more votes.
-            airlines[newAirline].approvedBy.push(airline);
-        }
-    }
-
-    /**
-    * @dev Returns boolean indicating whether an airline needs a registered airline to proceed with
-    *       the registration process.
-    */ 
-    function needsRegisteredAirline ()
-                                    external
-                                    view
-                                    returns(bool)
-    {
-        return registeredAirlines.length >= MULTIPARTY_CONSENSUS_THRESHOLD;
-    }
-
-    /**
-    * @dev Vote an airline after its been added. 
-    *       Can only be called from FlightSuretyApp contract
-    */ 
-    function voteAirline    (
-                                address airline,
-                                address newAirline
-                            )
-                            external
-                            requireAddedAirline(newAirline)
-                            requireRegisteredAirline(airline)
-                            requireRegisteredAirlineNotVotedYet(newAirline)
-    {
-        airlines[newAirline].approvedBy.push(airline);
-
-        // if the approved count is equal or greater than the max vote needed then mark 
-        // it as voted in. Next step is to pay.
-        if (airlines[newAirline].approvedBy.length >= getNextRequiredConsensusCount()) {
-            airlines[newAirline].registrationCode = REGISTRATION_CODE_VOTED_IN;
-        }
-    }
-
-    /**
-    * @dev Returns boolean indicating whether a registered airline has already voted for the applicant
-    *       airline or not.
-    */
-    function hasVotedForAirline     (
-                                        address airline,
-                                        address newAirline
-                                    )
-                                    external
-                                    view
-                                    returns (bool)
-    {
-        return hasEntry(airlines[newAirline].approvedBy, airline);
-    }
-
-    /**
-    * @dev Adds airline as part of registered airlines and marks it as registered.
-    */
-    function fundAirline
-                            (   
-                                address airline
-                            )
-                            external
-    {
-        // Mark as Funded.
-        airlines[airline].registrationCode = REGISTRATION_CODE_FUNDED;
-
-        // Added to registered airlines
-        registeredAirlines.push(airline);
-
-        // Mark as Registered.
-        airlines[airline].registrationCode = REGISTRATION_CODE_REGISTERED;
-    }
-
-    //--------------------
-    // Flight functions
-    //--------------------
-
-    /**
-    * @dev Returns the number of flight keys that an airline is associated with.
-    */
-    function getAirlineFlightKeysCount  (
-                                            address airline
-                                        )
-                                        external
-                                        view
-                                        returns(uint256)
-    {
-        return airlines[airline].flightKeys.length;
-    }
-
-    /**
-    * @dev Returns the flight key based on the airline and index.
-    */
-    function getAirlineFlightKey    (
-                                        address airline,
-                                        uint256 index
-                                    )
-                                    external
-                                    view
-                                    returns(bytes32)
-    {
-        return airlines[airline].flightKeys[index];
-    }
-
-    /**
-    * @dev Returns the flight and index based on the flightKey provided.
-    */
-    function getAirlineFlightInfo   (
-                                        bytes32 flightKey
-                                    )
-                                    external
-                                    view
-                                    returns(string memory flight, uint256 timestamp)
-    {
-        Flight storage flightEntry = flights[flightKey];
-        return (flightEntry.flight, flightEntry.timestamp);
-    }
-
-    /**
-    * @dev This registers a flight.
-    */ 
-    function registerFlight
-                            (   
-                                address airline,
-                                string flight,
-                                uint256 timestamp,
-                                bool isRegistered,
-                                uint8 statusCode
-                            )
-                            external
-                            requireRegisteredAirline(airline)
-    {
-
-        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-
-        flights[flightKey] = Flight({
-            isRegistered: isRegistered,
-            flight: flight,
-            statusCode: statusCode,
-            timestamp: timestamp
-        });
-        
-        // add a link
-        airlines[airline].flightKeys.push(flightKey);
-    }
-
-    //--------------------
-    // Insurance functions
-
-    //--------------------
-
-    /**
-    * @dev Buy insurance for a flight
     *
     */   
-    function buy
+    function _registerAirline
                             (   
-                                address insuree,  
-                                address airline,
-                                string flight,
-                                uint256 timestamp,
-                                uint256 amount       
+                                address account,
+                                bool isOperational
                             )
                             external
-                            payable
+                            requireIsOperational
     {
-        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-        
-        // Check if user has profile, otherwise, create user profile.
-        if (users[insuree].id == address(0)) {
-            users[insuree] = User({
-                id: insuree,
-                isRegistered: true,
-                payout: 0
-            });
-        }
-
-        insurances[flightKey].push(Insurance({buyerAddress: insuree, paidAmount: amount, payoutReceived: false}));
+        // isRegistered is Always true for a registered airline
+        // isOperational is only true when the airline has submited funding of 10 ether
+        airlines[account] = Airlines({
+            isRegistered: true,
+            isOperational: isOperational
+        });
+        setmultiCalls(account);
     }
 
     /**
-     *  @dev Transfers eligible payout funds to insuree
-     *
-    */
-    function pay
+    * @dev Check if an airline is registered
+    *
+    * @return A bool that indicates if the airline is registered
+    */   
+    function isAirline
                             (
-                                address insuree
+                                address account
                             )
                             external
+                            
+                            returns(bool)
     {
-        uint256 payout = users[insuree].payout;
+        require(account != address(0), "'account' must be a valid address.");
 
-        require(payout > 0, "Payout needs to be over 0 ETH");
-        
-        // Reset payee payout.
-        users[insuree].payout = 0;
-
-        // Transfer payout to payee.
-        insuree.transfer(payout);
+        return airlines[account].isRegistered;
     }
 
     /**
-    *  @dev Credits payouts to insurees
+     *  @dev Credits payouts to insurees
     */
     function creditInsurees
                                 (
                                     address airline,
-                                    string flight,
-                                    uint256 timestamp 
+                                    address passenger,
+                                    uint256 amount
                                 )
                                 external
+                                requireIsOperational
+                              
     {
-        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        // Get expected amount to be credited
+        uint256 required_amount =insurance[airline].amount.mul(3).div(2);
 
-        Insurance[] storage paidFlightInsurances = insurances[flightKey];
-        for(uint c = 0; c < paidFlightInsurances.length; c++) {
-            Insurance storage insurance = paidFlightInsurances[c];
-            // Check if the user has not receive payout for this insurance.
-            if (insurance.payoutReceived == false && insurance.paidAmount > 0) {
-                insurance.payoutReceived = true;
+        require(insurance[airline].passenger == passenger, "Passenger is not insured");
+        require(required_amount == amount, "The amount to be credited is not as espected");
+        require((passenger != address(0)) && (airline != address(0)), "'accounts' must be  valid address.");
 
-                uint256 paidAmount = insurance.paidAmount;
-                
-                // Credit user account, 1.5 times the amount paid.
-                uint256 payoutAmount = paidAmount.mul(3).div(2);
-                users[insurance.buyerAddress].payout = users[insurance.buyerAddress].payout.add(payoutAmount);
 
-                // Reset paid amount in the insurance
-                insurance.paidAmount = 0;
-            }
-        }
+        // Store amount to be credited in passenger balance
+        balances[passenger] = amount;
+
     }
 
-    /**
-    * @dev Initial funding for the insurance. Unless there are too many delayed flights
-    *      resulting in insurance payouts, the contract should be self-sustaining
-    *
-    */   
-    function fund
-                            (   
-                            )
-                            public
-                            payable
+    function withdraw
+                        (
+                            address passenger
+                        )
+                        external
+                        
+                        requireIsOperational
+                        returns(uint256)
     {
+        uint256 withdraw_cash = balances[passenger];
+
+        delete balances[passenger];
+        return withdraw_cash;
+
+
     }
+
+
+    function getInsuredPassenger_amount(address airline) external requireIsOperational  returns(address, uint256){
+        return (insurance[airline].passenger,insurance[airline].amount);
+    }
+
+    function getPassengerCredit(address passenger) external requireIsOperational returns(uint256){
+        return balances[passenger];
+    }  
+
 
     function getFlightKey
                         (
@@ -861,10 +325,14 @@ contract FlightSuretyData {
     * @dev Fallback function for funding smart contract.
     *
     */
+    /*
     function() 
                             external 
                             payable 
     {
         fund();
     }
+    */
+
+
 }
