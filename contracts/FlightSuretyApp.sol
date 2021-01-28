@@ -22,7 +22,7 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    uint constant M = 4; // Number of required keys for tx
+    uint constant REQUIRED_CONSENSUS = 4; // Number of required keys for tx
     bool private vote_status = false;
 
     // Flight status codees
@@ -141,9 +141,9 @@ contract FlightSuretyApp {
         require(flightSuretyData.getAirlineOperatingStatus(msg.sender), "Caller airline is not operational");
 
         
-        uint multicall_Length = flightSuretyData.multiCallsLength();
+        uint consensusSize = flightSuretyData.consensusSize();
 
-        if (multicall_Length < M){
+        if (consensusSize < REQUIRED_CONSENSUS){
             // Register airline directly in this case
             flightSuretyData._registerAirline(airline, false);
             emit RegisterAirline(airline);
@@ -153,7 +153,7 @@ contract FlightSuretyApp {
             if(vote_status){
                 uint voteCount = flightSuretyData.getVoteCounter(airline);
 
-                if(voteCount >= multicall_Length/2){
+                if(voteCount >= consensusSize/2){
                     // Airline has been voted in
                     flightSuretyData._registerAirline(airline, false);
   
@@ -551,7 +551,7 @@ contract FlightSuretyApp {
 // Creating an interface to FlightSuretyData.sol
 contract FlightSuretyData{
     function _registerAirline(address account, bool isOperational) external;
-    function multiCallsLength() external returns(uint);
+    function consensusSize() external returns(uint);
     function getAirlineOperatingStatus(address account) external returns(bool);
     function setAirlineOperatingStatus(address account, bool status) external;
     function registerInsurance(address airline, address passenger, uint256 amount) external;

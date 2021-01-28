@@ -90,9 +90,8 @@ let depature = null;
             let fdate = DOM.elid('flightDate').value;
             contract.buy(price,fid, (error, result)=> {
                 console.log("Insurance purchased with", price);
-                display('Oracles', 'Trigger oracles', [ { label: 'Assurance Detail', 
-                error: error, value: "Flight Name: "+fid+" | Depature Date: "+fdate+" | Assurance Paid: "+price+" ether"+ " | Paid on Delay: "+price*1.5+" ether"} ],"display-flight", "display-detail");
-                console.log("result", result);
+                displayResult('insurance-status','Insurance', '', [ { label: 'Assurance Detail', 
+                error: error, value: "Flight Name: "+fid+" | Depature Date: "+fdate+" | Assurance Paid: "+price+" ether"+ " | Paid on Delay: "+price*1.5+" ether"}]);
             });
         });
 

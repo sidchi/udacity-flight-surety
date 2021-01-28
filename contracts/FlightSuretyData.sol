@@ -37,7 +37,7 @@ contract FlightSuretyData {
     mapping(address => Insurance) insurance;                             // Airline address maps to struct
     mapping(address => uint256) balances;
     mapping(address => Fund) fund;
-    address[] multiCalls = new address[](0);
+    address[] consensus = new address[](0);
     mapping(address => uint) private voteCount;
     mapping(address => Voters) voters;
  
@@ -128,11 +128,11 @@ contract FlightSuretyData {
 
     // ------------------- Get and Set function for multiCalls -------------------------
 
-    function setmultiCalls(address account) private {
-        multiCalls.push(account);
+    function setConsensus(address account) private {
+        consensus.push(account);
     }
-    function multiCallsLength() external requireIsOperational returns(uint){
-        return multiCalls.length;
+    function consensusSize() external requireIsOperational returns(uint){
+        return consensus.length;
     }
 
 
@@ -234,7 +234,7 @@ contract FlightSuretyData {
             isRegistered: true,
             isOperational: isOperational
         });
-        setmultiCalls(account);
+        setConsensus(account);
     }
 
     /**
