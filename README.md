@@ -47,6 +47,18 @@ To install, download or clone the repo, then:
 `npm install`
 `truffle compile`
 
+## Tests
+
+![Tests](./images/tests1.png "Test1")
+
+![Tests](./images/tests2.png "Test2")
+
+## GUI Flow
+
+![GUI](./images/gui.png "GUI")
+
+
+
 ## Develop Client
 
 To run truffle tests:

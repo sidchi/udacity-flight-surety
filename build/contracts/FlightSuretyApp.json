@@ -33406,9 +33406,221 @@
     "name": "solc",
     "version": "0.4.26+commit.4563c3fc.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "1611877072124": {
+      "events": {
+        "0xac78ffce05a964fd93df05896e78ca7d509ad473c8ac2aee9009a32a60afa951": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "name": "RegisterAirline",
+          "type": "event"
+        },
+        "0x39a672fcc0812acb5b6ba6f625d60bc09a97137044ddcb5563892e7e866ab5c2": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "PurchaseInsurance",
+          "type": "event"
+        },
+        "0x1814de5bef6c653774e7a391ca719df58da77dedccab3eeba831a23a16fdeae0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "passenger",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "credit",
+              "type": "uint256"
+            }
+          ],
+          "name": "CreditInsurees",
+          "type": "event"
+        },
+        "0x0f4d5a78211ec3eff037a8f9d0164a6646dfff8c30b0843e7c6812dc7d404542": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "funded",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "name": "FundedLines",
+          "type": "event"
+        },
+        "0x884edad9ce6fa2440d8a54cc123490eb96d2768479d49ff9c7366125a9424364": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "Withdraw",
+          "type": "event"
+        },
+        "0x787466e85c3a616e39118eb5c154f7e656d8cefd53000f0564abacc4a7f2f87e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "indexes",
+              "type": "uint8"
+            },
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "flight",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "statusCode",
+              "type": "uint8"
+            }
+          ],
+          "name": "SubmitOracleResponse",
+          "type": "event"
+        },
+        "0xe23f5229de535c091e3b7bec2665f5d698192d3b31393066e8987b7a05076b6c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "flight",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "name": "FlightStatusInfo",
+          "type": "event"
+        },
+        "0x43c853095c2752648493c88b4baac4d580d2594ffb00c6f1d4242d844514f783": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "flight",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "name": "OracleReport",
+          "type": "event"
+        },
+        "0x3ed01f2c3fc24c6b329d931e35b03e390d23497d22b3f90e15b600343e93df11": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "index",
+              "type": "uint8"
+            },
+            {
+              "indexed": false,
+              "name": "airline",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "flight",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "name": "OracleRequest",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x567c27FEb680918D1Bf06ad4c382c7B1Ec868893",
+      "transactionHash": "0x386aa58373e2bcc665ebda9dc81949b8c98fb0de5ce9a59c4f90a24488775422"
+    }
+  },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-27T23:52:28.889Z",
+  "updatedAt": "2021-01-28T23:40:08.302Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {
       "approveAirlineRegistration(address,bool)": {

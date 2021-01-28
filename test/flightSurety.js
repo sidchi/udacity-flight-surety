@@ -271,7 +271,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
         eth_balance_before = await web3.eth.getBalance(passenger)
         eth_balance_before = web3.utils.fromWei(eth_balance_before, "ether");
-        console.log("ETH balance before: ",eth_balance_before)
+        console.log("Before Insurance Ether: ",eth_balance_before)
 
         await config.flightSuretyApp.withdraw({from:passenger});
 
@@ -281,9 +281,9 @@ contract('Flight Surety Tests', async (accounts) => {
 
         eth_balance_after = await web3.eth.getBalance(passenger)
         eth_balance_after = web3.utils.fromWei(eth_balance_after, "ether");
-        console.log("ETH balance after: ",eth_balance_after)
+        console.log("After Insurance Ether: ",eth_balance_after)
 
-        console.log("The difference is ", eth_balance_after - eth_balance_before);
+        console.log("Change ", eth_balance_after - eth_balance_before);
 
     }catch(e){
         withdraw = false;

@@ -14863,9 +14863,42 @@
     "name": "solc",
     "version": "0.4.26+commit.4563c3fc.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "1611877072124": {
+      "events": {
+        "0x2c74592fddad593c2c4403101ce9b30930711ab87571268ddd1e1989ee1d7917": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "authContract",
+              "type": "address"
+            }
+          ],
+          "name": "AuthorizedContract",
+          "type": "event"
+        },
+        "0xd5cf915bcf19ee4a2edf05f0add6e4520e02eda58f4b4a99387be2a7ae79cefb": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "authContract",
+              "type": "address"
+            }
+          ],
+          "name": "DeAuthorizedContract",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x94efa96f8e0774B35Ddbe9f4ADDa9d13f62d20A1",
+      "transactionHash": "0xcc79723771b45061c8f79c318fdbb481759addddbbfdc01bb057364fa486f279"
+    }
+  },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-27T23:54:13.538Z",
+  "updatedAt": "2021-01-28T23:40:08.314Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {
       "_registerAirline(address,bool)": {
